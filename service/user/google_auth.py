@@ -4,13 +4,22 @@ from sqlalchemy.orm import Session
 from models.user.user import User
 from service.user.auth import create_access_token
 import uuid
+import os
+from dotenv import load_dotenv
 
-GOOGLE_CLIENT_ID = "776723084181-ilgvju235ine04lqlkbl7v4nd55rpt3m.apps.googleusercontent.com"
+# Load environment variables from .env
+load_dotenv()
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
 
 def login_or_register_google_user(db: Session, token: str):
     """
     Verify Google ID token, create user if not exists, return JWT
     """
+    if not GOOGLE_CLIENT_ID:
+        raise ValueError("GOOGLE_CLIENT_ID is not set in environment variables")
+
     try:
         # Verify the token with Google
         idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), GOOGLE_CLIENT_ID)
