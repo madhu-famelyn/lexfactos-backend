@@ -21,20 +21,29 @@ from api.user.auth import auth_router
 
 from api.admin.admin import admin_router
 
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
+
 app = FastAPI(
     title="Lexfactos Backend",
     description="FastAPI backend with Lawyer Registration & AWS S3 integration",
     version="1.0.0"
 )
 
-# Middleware (CORS)
+# CORS settings
+origins = [
+    "https://lexfactos-frontend.onrender.com",
+    "http://localhost:3000",  # for local testing
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=origins,        # Only allow your frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 app.include_router(lawyer_registration1_router)
