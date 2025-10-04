@@ -16,7 +16,7 @@ from schemas.lawyer.registration3 import (
 
 
 def create_lawyer_registration3(db: Session, data: LawyerRegistration3Create) -> LawyerRegistration3:
-    # ✅ Check if lawyer exists in lawyerRegistration1
+    # ✅ 1. Check if lawyer exists in lawyerRegistration1
     lawyer = db.query(LawyerRegistration1).filter(LawyerRegistration1.id == data.lawyer_id).first()
     if not lawyer:
         raise HTTPException(
@@ -24,7 +24,10 @@ def create_lawyer_registration3(db: Session, data: LawyerRegistration3Create) ->
             detail="Lawyer ID not found in lawyerRegistration1"
         )
 
-    # ✅ Check if registration3 profile already exists for this lawyer
+    # ✅ 2. Get lawyer's code_id
+    lawyer_code_id = lawyer.code_id
+
+    # ✅ 3. Check if registration3 already exists for this lawyer
     existing_profile = db.query(LawyerRegistration3).filter(
         LawyerRegistration3.lawyer_id == data.lawyer_id
     ).first()
@@ -35,7 +38,6 @@ def create_lawyer_registration3(db: Session, data: LawyerRegistration3Create) ->
         existing_profile.court_admitted_to = data.court_admitted_to
         existing_profile.active_since = data.active_since
 
-        # ✅ Store work_experience with description included
         existing_profile.work_experience = [
             {
                 "company_name": we.company_name,
@@ -46,6 +48,7 @@ def create_lawyer_registration3(db: Session, data: LawyerRegistration3Create) ->
             for we in data.work_experience
         ]
 
+        existing_profile.code_id = lawyer_code_id  # ✅ update code_id too
 
         db.commit()
         db.refresh(existing_profile)
@@ -66,13 +69,14 @@ def create_lawyer_registration3(db: Session, data: LawyerRegistration3Create) ->
             }
             for we in data.work_experience
         ],
+        code_id=lawyer_code_id  # ✅ assign automatically
     )
 
     db.add(new_profile)
     db.commit()
     db.refresh(new_profile)
     return new_profile
-    
+
 
 # -------------------
 # Get lawyer registration3 profile by lawyer_id

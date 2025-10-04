@@ -10,18 +10,25 @@ from service.s3_service import upload_to_s3
 
 
 
-def create_lawyer_registration4(db: Session, lawyer_data: LawyerRegistration4Create, office_image: UploadFile = None):
-    # ✅ Check if lawyer_id exists in LawyerRegistration1
+def create_lawyer_registration4(
+    db: Session,
+    lawyer_data: LawyerRegistration4Create,
+    office_image: UploadFile = None
+):
+    # ✅ 1. Check if lawyer exists in LawyerRegistration1
     lawyer_exists = db.query(LawyerRegistration1).filter(LawyerRegistration1.id == lawyer_data.lawyer_id).first()
     if not lawyer_exists:
         raise ValueError(f"Lawyer with id {lawyer_data.lawyer_id} does not exist")
 
-    # ✅ Upload image to S3 (if provided)
+    # ✅ 2. Get lawyer's code_id
+    lawyer_code_id = lawyer_exists.code_id
+
+    # ✅ 3. Upload image to S3 if provided
     office_image_url = None
     if office_image:
         office_image_url = upload_to_s3(office_image, folder="lawyers")
 
-    # ✅ Check if registration4 already exists
+    # ✅ 4. Check if registration4 already exists
     existing_entry = db.query(LawyerRegistration4).filter(LawyerRegistration4.lawyer_id == lawyer_data.lawyer_id).first()
 
     if existing_entry:
@@ -29,6 +36,8 @@ def create_lawyer_registration4(db: Session, lawyer_data: LawyerRegistration4Cre
         if office_image_url:
             existing_entry.office_image = office_image_url
         existing_entry.case_results = [case.dict() for case in lawyer_data.case_results] if lawyer_data.case_results else None
+
+        existing_entry.code_id = lawyer_code_id  # ✅ update code_id
 
         db.commit()
         db.refresh(existing_entry)
@@ -39,12 +48,12 @@ def create_lawyer_registration4(db: Session, lawyer_data: LawyerRegistration4Cre
         lawyer_id=lawyer_data.lawyer_id,
         office_image=office_image_url,
         case_results=[case.dict() for case in lawyer_data.case_results] if lawyer_data.case_results else None,
+        code_id=lawyer_code_id  # ✅ assign code_id automatically
     )
     db.add(db_lawyer4)
     db.commit()
     db.refresh(db_lawyer4)
     return db_lawyer4
-
 
 
 # Get LawyerRegistration4 by ID

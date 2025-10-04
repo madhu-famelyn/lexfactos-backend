@@ -12,7 +12,7 @@ from schemas.lawyer.registration6 import (
 # Create LawyerRegistration6
 # -------------------------
 def create_lawyer_registration6(db: Session, data: LawyerRegistration6Create):
-    # ✅ Validate lawyer_id exists
+    # ✅ 1. Validate lawyer_id exists in LawyerRegistration1
     lawyer = db.query(LawyerRegistration1).filter(LawyerRegistration1.id == data.lawyer_id).first()
     if not lawyer:
         raise HTTPException(
@@ -20,31 +20,40 @@ def create_lawyer_registration6(db: Session, data: LawyerRegistration6Create):
             detail=f"Lawyer with id {data.lawyer_id} not found"
         )
 
+    # ✅ 2. Get lawyer's code_id
+    lawyer_code_id = lawyer.code_id
 
+    # ✅ 3. Check if registration6 already exists
     existing_entry = db.query(LawyerRegistration6).filter(LawyerRegistration6.lawyer_id == data.lawyer_id).first()
 
     if existing_entry:
+        # 🔄 Update existing record
         existing_entry.professional_associations = data.professional_associations
         existing_entry.certifications = [cert.dict() for cert in data.certifications] if data.certifications else None
         existing_entry.awards = [award.dict() for award in data.awards] if data.awards else None
         existing_entry.publications = [pub.dict() for pub in data.publications] if data.publications else None
 
+        existing_entry.code_id = lawyer_code_id  # ✅ update code_id
+
         db.commit()
         db.refresh(existing_entry)
         return existing_entry
 
+    # ➕ Create new record
     new_entry = LawyerRegistration6(
         lawyer_id=data.lawyer_id,
         professional_associations=data.professional_associations,
         certifications=[cert.dict() for cert in data.certifications] if data.certifications else None,
         awards=[award.dict() for award in data.awards] if data.awards else None,
         publications=[pub.dict() for pub in data.publications] if data.publications else None,
+        code_id=lawyer_code_id  # ✅ assign code_id automatically
     )
 
     db.add(new_entry)
     db.commit()
     db.refresh(new_entry)
     return new_entry
+
 
 
 

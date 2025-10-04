@@ -10,8 +10,10 @@ class LawyerRegistration5Base(BaseModel):
     city: str
     state: str
     zip_code: str
+    latitude: str
+    longitude: str
     calendly_link: Optional[str] = None
-    working_hours: Optional[str] = None  # e.g., "Mon-Fri: 9AM-6PM"
+    working_hours: Optional[str] = None# e.g., "Mon-Fri: 9AM-6PM"
 
 
 # Create schema

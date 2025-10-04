@@ -21,8 +21,7 @@ class LawyerRegistration1(Base):
     code_id = Column(String, unique=True, index=True, nullable=False)
 
 
-    # ✅ New column for rejection reason
-    rejection_reason = Column(String, nullable=True)  # Why rejected, optional
+    rejection_reason = Column(String, nullable=True)  
 
     created_datetime = Column(
         TIMESTAMP(timezone=True), 

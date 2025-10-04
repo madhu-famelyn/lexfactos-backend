@@ -30,11 +30,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS settings
 origins = [
     "https://lexfactos-frontend.onrender.com",
-    "http://localhost:3000",  # for local testing
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
+
 
 app.add_middleware(
     CORSMiddleware,

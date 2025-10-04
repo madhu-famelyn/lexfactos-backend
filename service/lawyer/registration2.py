@@ -11,7 +11,7 @@ from schemas.lawyer.registration2 import (
 
 
 def create_lawyer_profile(db: Session, data: LawyerRegistration2Create) -> LawyerRegistration2:
-    # ✅ Check if lawyer exists in lawyerRegistration1
+    # ✅ 1. Check if lawyer exists in lawyerRegistration1
     lawyer = db.query(LawyerRegistration1).filter(LawyerRegistration1.id == data.lawyer_id).first()
     if not lawyer:
         raise HTTPException(
@@ -19,7 +19,10 @@ def create_lawyer_profile(db: Session, data: LawyerRegistration2Create) -> Lawye
             detail="Lawyer ID not found in lawyerRegistration1"
         )
 
-    # ✅ Check if profile already exists
+    # ✅ 2. Extract code_id from LawyerRegistration1
+    lawyer_code_id = lawyer.code_id
+
+    # ✅ 3. Check if profile already exists
     existing_profile = db.query(LawyerRegistration2).filter(LawyerRegistration2.lawyer_id == data.lawyer_id).first()
 
     if existing_profile:
@@ -29,6 +32,7 @@ def create_lawyer_profile(db: Session, data: LawyerRegistration2Create) -> Lawye
         existing_profile.bar_details = [bar.dict() for bar in data.bar_details]
         existing_profile.languages_spoken = data.languages_spoken
         existing_profile.education = [edu.dict() for edu in data.education]
+        existing_profile.code_id = lawyer_code_id  # ✅ update code_id as well
 
         db.commit()
         db.refresh(existing_profile)
@@ -42,11 +46,13 @@ def create_lawyer_profile(db: Session, data: LawyerRegistration2Create) -> Lawye
             bar_details=[bar.dict() for bar in data.bar_details],
             languages_spoken=data.languages_spoken,
             education=[edu.dict() for edu in data.education],
+            code_id=lawyer_code_id  # ✅ added here
         )
         db.add(new_profile)
         db.commit()
         db.refresh(new_profile)
         return new_profile
+
 
 
 

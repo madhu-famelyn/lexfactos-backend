@@ -9,7 +9,7 @@ from schemas.lawyer.registration5 import (
 
 
 def create_registration5(db: Session, registration_data: LawyerRegistration5Create):
-    # ✅ Check if lawyer exists
+    # ✅ 1. Check if lawyer exists
     lawyer = db.query(LawyerRegistration1).filter(LawyerRegistration1.id == registration_data.lawyer_id).first()
     if not lawyer:
         raise HTTPException(
@@ -17,7 +17,10 @@ def create_registration5(db: Session, registration_data: LawyerRegistration5Crea
             detail=f"Lawyer with id {registration_data.lawyer_id} not found",
         )
 
-    # ✅ Check if Registration5 already exists
+    # ✅ 2. Get lawyer's code_id
+    lawyer_code_id = lawyer.code_id
+
+    # ✅ 3. Check if Registration5 already exists
     existing = db.query(LawyerRegistration5).filter(LawyerRegistration5.lawyer_id == registration_data.lawyer_id).first()
 
     if existing:
@@ -25,12 +28,17 @@ def create_registration5(db: Session, registration_data: LawyerRegistration5Crea
         for field, value in registration_data.dict().items():
             setattr(existing, field, value)
 
+        existing.code_id = lawyer_code_id  # ✅ update code_id
+
         db.commit()
         db.refresh(existing)
         return existing
 
     # ➕ Create new record
-    new_reg5 = LawyerRegistration5(**registration_data.dict())
+    new_reg5 = LawyerRegistration5(
+        **registration_data.dict(),
+        code_id=lawyer_code_id  # ✅ assign code_id automatically
+    )
     db.add(new_reg5)
     db.commit()
     db.refresh(new_reg5)
