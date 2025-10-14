@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_
 from config.db.session import get_db
 from models.lawyer.registration1 import LawyerRegistration1
 from models.lawyer.registration2 import LawyerRegistration2
@@ -499,28 +500,35 @@ def search_lawyers(
             joinedload(LawyerRegistration1.registration5),
             joinedload(LawyerRegistration1.registration6),
         )
+        # ✅ Return only verified lawyers
+        .filter(LawyerRegistration1.is_verified == True)
     )
 
-    # Filter by practice area (registration3.practice_area contains CSV string)
+    # ✅ Filter by practice area (registration3.practice_area is a CSV string)
     if practice_area:
-        query = query.filter(LawyerRegistration1.registration3.has(
-            LawyerRegistration1.registration3.property.mapper.class_.practice_area.ilike(f"%{practice_area}%")
-        ))
+        query = query.filter(
+            LawyerRegistration1.registration3.has(
+                LawyerRegistration1.registration3.property.mapper.class_.practice_area.ilike(f"%{practice_area}%")
+            )
+        )
 
-    # Filter by location (state or city in registration5)
+    # ✅ Filter by location (search in state or city in registration5)
     if location:
         query = query.filter(
             LawyerRegistration1.registration5.any(
-                (LawyerRegistration1.registration5.property.mapper.class_.state.ilike(f"%{location}%")) |
-                (LawyerRegistration1.registration5.property.mapper.class_.city.ilike(f"%{location}%"))
+                or_(
+                    LawyerRegistration1.registration5.property.mapper.class_.state.ilike(f"%{location}%"),
+                    LawyerRegistration1.registration5.property.mapper.class_.city.ilike(f"%{location}%")
+                )
             )
         )
 
     lawyers = query.all()
 
     if not lawyers:
-        raise HTTPException(status_code=404, detail="No lawyers found")
+        raise HTTPException(status_code=404, detail="No verified lawyers found for the given filters")
 
+    # ✅ Response formatting
     return [
         {
             "id": lawyer.id,
@@ -566,8 +574,8 @@ def search_lawyers(
                     "zip_code": reg5.zip_code,
                     "calendly_link": reg5.calendly_link,
                     "working_hours": reg5.working_hours,
-                    "latitude":reg5.latitude,
-                    "longitude":reg5.longitude,
+                    "latitude": reg5.latitude,
+                    "longitude": reg5.longitude,
                 }
                 for reg5 in lawyer.registration5
             ],

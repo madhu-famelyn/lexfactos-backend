@@ -36,15 +36,13 @@ origins = [
     "http://127.0.0.1:3000",
 ]
 
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,        # Only allow your frontend
+    allow_origins=origins,  # your frontend domains
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],     # allow all HTTP methods
+    allow_headers=["*"],     # allow all headers
 )
-
 
 
 app.include_router(lawyer_registration1_router)
