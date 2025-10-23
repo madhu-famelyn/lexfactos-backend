@@ -13,8 +13,8 @@ from models.lawyer.registration6 import LawyerRegistration6
 
 
 from models.user.user import User
-# from models.user.saved_lawyers import SavedLawyer
-
+from models.user.postjobs import JobPost
+from models.user.apply import JobApplication
 
 
 

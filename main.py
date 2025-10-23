@@ -1,3 +1,6 @@
+
+
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.lawyer.registration1 import lawyer_registration1_router
@@ -7,6 +10,9 @@ from api.lawyer.registration4 import lawyer_registration4_router
 from api.lawyer.registration5 import lawyer_registration5_router
 from api.lawyer.registration6 import lawyer_registration6_router
 from api.lawyer.getlawyerfulldetails import get_all_router
+from api.user.get_job import get_all_jobs_router
+from api.user.apply import job_application_router
+
 
 
 
@@ -16,6 +22,7 @@ from api.lawyer.excelupload import excel_router
 
 from api.user.user import user_router
 from api.user.auth import auth_router
+from api.user.post_job import post_job_router
 
 
 
@@ -51,11 +58,14 @@ app.include_router(lawyer_registration3_router)
 app.include_router(lawyer_registration4_router)
 app.include_router(lawyer_registration5_router)
 app.include_router(lawyer_registration6_router)
+app.include_router(get_all_jobs_router)
 
 
 
 app.include_router(user_router)
 app.include_router(auth_router)
+app.include_router(post_job_router)
+app.include_router(job_application_router)
 
 
 
