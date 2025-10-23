@@ -6,22 +6,29 @@ from models.user.user import User
 from schemas.user.user import UserCreate, UserResponse
 from service.s3_service import upload_to_s3
 
-# Password hashing context
+# ✅ Password hashing context (bcrypt)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def get_password_hash(password: str) -> str:
-    """Hash plain password"""
+    """
+    Safely hash the plain password.
+    bcrypt only supports up to 72 bytes; truncate longer ones to avoid errors.
+    """
+    if len(password.encode("utf-8")) > 72:
+        password = password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
     return pwd_context.hash(password)
 
 
-def create_user(db: Session, user_data: UserCreate, photo: UploadFile) -> UserResponse:
+def create_user(db: Session, user_data: UserCreate, photo: UploadFile | None) -> UserResponse:
+    """Create a new user with hashed password and uploaded photo."""
+
     # ✅ Check if email exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail="Email already registered",
         )
 
     # ✅ Check if mobile exists
@@ -29,13 +36,19 @@ def create_user(db: Session, user_data: UserCreate, photo: UploadFile) -> UserRe
     if existing_mobile:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mobile number already registered"
+            detail="Mobile number already registered",
         )
 
-    # ✅ Upload photo to S3
+    # ✅ Upload photo to S3 (if provided)
     photo_url = None
     if photo:
-        photo_url = upload_to_s3(photo, folder="users")
+        try:
+            photo_url = upload_to_s3(photo, folder="users")
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Photo upload failed: {str(e)}",
+            )
 
     # ✅ Create User object
     new_user = User(
@@ -44,7 +57,7 @@ def create_user(db: Session, user_data: UserCreate, photo: UploadFile) -> UserRe
         email=user_data.email,
         mobile_number=user_data.mobile_number,
         hashed_password=get_password_hash(user_data.password),
-        photo=photo_url
+        photo=photo_url,
     )
 
     # ✅ Save to DB
